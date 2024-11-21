@@ -30,7 +30,7 @@ services:
       - auth_db
       - alembic
     entrypoint: >
-      sh -c "while ! nc -z auth_db 5432; do sleep 1; done &&
+      sh -c "while ! nc -z 0.0.0.0 5434; do sleep 1; done &&
              uvicorn main:app --host 0.0.0.0 --port 8000"
 
   transaction_service:
@@ -45,7 +45,7 @@ services:
       - auth_service
       - alembic
     entrypoint: >
-      sh -c "while ! nc -z transaction_db 5432; do sleep 1; done &&
+      sh -c "while ! nc -z 0.0.0.0 5435; do sleep 1; done &&
              uvicorn main:app --host 0.0.0.0 --port 8001"
 
   alembic:
