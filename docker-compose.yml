@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  auth_db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: auth_db
+    ports:
+      - "5434:5432"
+
+  transaction_db:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
+      POSTGRES_DB: transaction_db
+    ports:
+      - "5435:5432"
+
+  auth_service:
+    build:
+      dockerfile: auth_service/Dockerfile
+    environment:
+      SQLALCHEMY_DATABASE_URL: "postgresql://postgres:root@auth_db/auth_db"
+    ports:
+      - "8000:8000"
+    depends_on:
+      - auth_db
+      - alembic
+
+  transaction_service:
+    build:
+      dockerfile: transaction_service/Dockerfile
+    environment:
+      SQLALCHEMY_DATABASE_URL: "postgresql://postgres:root@transaction_db/transaction_db"
+    ports:
+      - "8001:8001"
+    depends_on:
+      - transaction_db
+      - auth_service
+      - alembic
+
+  alembic:
+    image: python:3.9-slim
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: >
+      sh -c "pip install -r requirements.txt &&
+             alembic upgrade head --section auth_service &&
+             alembic upgrade head --section transaction_service"
+    depends_on:
+      - auth_db
+      - transaction_db
